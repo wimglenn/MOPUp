@@ -73,7 +73,15 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
             fullversion = parse(pyver)
             if fullversion.pre and not thispkgver.pre:
                 continue
-            if (fullversion.major, fullversion.minor, fullversion.micro) == (major, minor, micro):
+            if (
+                fullversion.major,
+                fullversion.minor,
+                fullversion.micro,
+            ) == (
+                major,
+                minor,
+                micro,
+            ):
                 versions[major][minor][micro][macver].append((fullversion, pkgdl))
 
     newminor = max(versions[thismajor].keys())
