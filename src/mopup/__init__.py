@@ -17,6 +17,8 @@ from typing import Pattern
 from typing import Tuple
 from uuid import uuid4
 
+
+from packaging.version import parse, Version
 import html5lib
 import requests
 from hyperlink import DecodedURL
@@ -41,13 +43,21 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
     ver = compile_re(r"(\d+)\.(\d+).(\d+)/")
     macpkg = compile_re("python-(.+)-macosx?(.*).pkg")
 
-    thismajor, thisminor, thismicro, *other = version_info
+    thismajor, thisminor, thismicro, level, serial = version_info
 
-    # major, minor, micro, macos
+    thispkgver = Version(
+        f"{thismajor}.{thisminor}.{thismicro}"
+        + (f".{level}{serial}" if level != "final" else "")
+    )
+
+    # {macos, major, minor: [(Version, URL)]}
+    # major, minor, micro, macos: [(version, URL)]
     versions: Dict[
-        int, Dict[int, Dict[int, Dict[str, DecodedURL]]]
+        int, Dict[int, Dict[int, Dict[str, list[tuple[Version, DecodedURL]]]]]
     ] = collections.defaultdict(
-        lambda: collections.defaultdict(lambda: collections.defaultdict(dict))
+        lambda: collections.defaultdict(
+            lambda: collections.defaultdict(lambda: collections.defaultdict(list))
+        )
     )
 
     baseurl = DecodedURL.from_text("https://www.python.org/ftp/python/")
@@ -60,8 +70,11 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
             continue
         for eachmac, pkgdl in alllinksin(suburl, macpkg):
             pyver, macver = eachmac.groups()
-            if pyver == f"{major}.{minor}.{micro}":
-                versions[major][minor][micro][macver] = pkgdl
+            fullversion = parse(pyver)
+            if fullversion.pre and not thispkgver.pre:
+                continue
+            if (fullversion.major, fullversion.minor, fullversion.micro) == (major, minor, micro):
+                versions[major][minor][micro][macver].append((fullversion, pkgdl))
 
     newminor = max(versions[thismajor].keys())
     newmicro = max(versions[thismajor][newminor].keys())
@@ -72,8 +85,13 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
         if this_mac_ver >= tuple(int(x) for x in available_mac_ver.split("."))
     )
 
-    update_needed = (newminor, newmicro) > (thisminor, thismicro)
-    download_url = versions[thismajor][newminor][newmicro][best_available_mac]
+    download_urls = versions[thismajor][newminor][newmicro][best_available_mac]
+
+    best_ver, download_url = sorted(download_urls, reverse=True)[0]
+
+    print(f"this version: {thispkgver}; new version: {best_ver}")
+    update_needed = best_ver > thispkgver
+
     print(
         "update",
         "needed" if update_needed else "not needed",
