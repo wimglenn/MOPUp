@@ -1,27 +1,19 @@
 """Auto-updater for official python.org builds of python."""
 import collections
-from os import makedirs
-from os import rename
-from os import rmdir
-from os import unlink
+from os import makedirs, rename, rmdir, unlink
 from os.path import expanduser
 from os.path import join as pathjoin
 from platform import mac_ver
 from re import compile as compile_re
 from subprocess import run  # noqa: S404
 from sys import version_info
-from typing import Dict
-from typing import Iterable
-from typing import Match
-from typing import Pattern
-from typing import Tuple
+from typing import Dict, Iterable, List, Match, Pattern, Tuple
 from uuid import uuid4
 
-
-from packaging.version import parse, Version
 import html5lib
 import requests
 from hyperlink import DecodedURL
+from packaging.version import Version, parse
 from rich.progress import Progress
 
 
@@ -53,7 +45,7 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
     # {macos, major, minor: [(Version, URL)]}
     # major, minor, micro, macos: [(version, URL)]
     versions: Dict[
-        int, Dict[int, Dict[int, Dict[str, list[tuple[Version, DecodedURL]]]]]
+        int, Dict[int, Dict[int, Dict[str, List[Tuple[Version, DecodedURL]]]]]
     ] = collections.defaultdict(
         lambda: collections.defaultdict(
             lambda: collections.defaultdict(lambda: collections.defaultdict(list))
