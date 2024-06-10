@@ -7,7 +7,6 @@ repos:
         language: system
         types: [python]
         require_serial: true
-        rev: 24.4.2
       - id: check-added-large-files
         name: Check for added large files
         entry: check-added-large-files
@@ -33,6 +32,7 @@ repos:
         entry: flake8
         language: system
         types: [python]
+        exclude: noxfile.py
         require_serial: true
       - id: pyupgrade
         name: pyupgrade
@@ -41,12 +41,6 @@ repos:
         language: system
         types: [python]
         args: [--py37-plus]
-      - id: reorder-python-imports
-        name: Reorder python imports
-        entry: reorder-python-imports
-        language: system
-        types: [python]
-        args: [--application-directories=src]
       - id: trailing-whitespace
         name: Trim Trailing Whitespace
         entry: trailing-whitespace-fixer

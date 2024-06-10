@@ -90,7 +90,9 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
 
     best_ver, download_url = sorted(download_urls, reverse=True)[0]
 
-    print(f"this version: {thispkgver}; new version: {best_ver}")
+    # TODO: somehow flake8 in pre-commit thinks that this semicolon is in the
+    # *code* and not in a string.
+    print(f"this version: {thispkgver}; new version: {best_ver}")  # noqa
     update_needed = best_ver > thispkgver
 
     print(
