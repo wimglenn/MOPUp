@@ -1,4 +1,5 @@
 """Auto-updater for official python.org builds of python."""
+
 import collections
 from os import makedirs, rename, rmdir, unlink
 from os.path import expanduser
