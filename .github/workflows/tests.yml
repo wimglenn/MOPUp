@@ -17,7 +17,6 @@ jobs:
           - { python: "3.10", os: "macos-latest", session: "tests" }
           - { python: "3.9", os: "macos-latest", session: "tests" }
           - { python: "3.8", os: "macos-latest", session: "tests" }
-          - { python: "3.7", os: "macos-latest", session: "tests" }
           - { python: "3.10", os: "macos-latest", session: "typeguard" }
           - { python: "3.10", os: "macos-latest", session: "xdoctest" }
           - { python: "3.10", os: "ubuntu-latest", session: "docs-build" }
@@ -52,13 +51,13 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          pipx install --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" nox
+          pipx inject --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" nox nox-poetry
           nox --version
 
       - name: Compute pre-commit cache key
@@ -122,13 +121,13 @@ jobs:
 
       - name: Install Poetry
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" poetry
           poetry --version
 
       - name: Install Nox
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          pipx install --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" nox
+          pipx inject --pip-args="--constraint=${PWD}/.github/workflows/constraints.txt" nox nox-poetry
           nox --version
 
       - name: Download coverage data

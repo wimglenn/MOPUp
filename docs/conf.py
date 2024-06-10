@@ -1,6 +1,6 @@
 """Sphinx configuration."""
-from datetime import datetime
 
+from datetime import datetime
 
 project = "MOPUp"
 author = "Glyph Lefkowitz"
