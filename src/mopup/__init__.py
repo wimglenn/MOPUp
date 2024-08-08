@@ -36,11 +36,16 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
     ver = compile_re(r"(\d+)\.(\d+).(\d+)/")
     macpkg = compile_re("python-(.+)-macosx?(.*).pkg")
 
-    thismajor, thisminor, thismicro, level, serial = version_info
+    thismajor, thisminor, thismicro, releaselevel, serial = version_info
+    level = {
+        "alpha": "a",
+        "beta": "b",
+        "candidate": "rc",
+        "final": "",
+    }[releaselevel]
 
     thispkgver = Version(
-        f"{thismajor}.{thisminor}.{thismicro}"
-        + (f".{level}{serial}" if level != "final" else "")
+        f"{thismajor}.{thisminor}.{thismicro}" + (f".{level}{serial}" if level else "")
     )
 
     # {macos, major, minor: [(Version, URL)]}
