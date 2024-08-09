@@ -42,7 +42,7 @@ def choicechanges(pkgfile: str) -> str:
     all_installed = set(
         run(  # noqa: S603
             [
-                "/usr/sbin/pkngutil",
+                "/usr/sbin/pkgutil",
                 "--pkgs",
             ],
             stdout=PIPE,
