@@ -5,9 +5,12 @@ from os import makedirs, rename, rmdir, unlink
 from os.path import expanduser
 from os.path import join as pathjoin
 from platform import mac_ver
+from plistlib import dumps as dumpplist
+from plistlib import loads as loadplist
 from re import compile as compile_re
-from subprocess import run  # noqa: S404
+from subprocess import PIPE, run  # noqa: S404
 from sys import version_info
+from tempfile import NamedTemporaryFile
 from typing import Dict, Iterable, List, Match, Pattern, Tuple
 from uuid import uuid4
 
@@ -30,11 +33,49 @@ def alllinksin(
             yield match, u.click(a.attrib["href"])
 
 
+def choicechanges(pkgfile: str) -> str:
+    """
+    Compute the choice-changes XML for a given package based on what is
+    currently installed.
+    """
+
+    all_installed = set(
+        run(  # noqa: S603
+            [
+                "/usr/sbin/pkngutil",
+                "--pkgs",
+            ],
+            stdout=PIPE,
+        )
+        .stdout.decode()
+        .split("\n")
+    )
+    dicts = loadplist(
+        run(  # noqa: S603
+            [
+                "/usr/sbin/installer",
+                "-showChoiceChangesXML",
+                "-pkg",
+                pkgfile,
+            ],
+            stdout=PIPE,
+        ).stdout
+    )
+    for each in dicts:
+        if each["choiceAttribute"] == "selected":
+            choice_id = each["choiceIdentifier"]
+            setting = int(choice_id in all_installed)
+            if setting:
+                print("selecting choice", each["choiceIdentifier"])
+                each["attributeSetting"] = setting
+    return dumpplist(dicts).decode()
+
+
 def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> None:
     """Do an update."""
     this_mac_ver = tuple(map(int, mac_ver()[0].split(".")[:2]))
     ver = compile_re(r"(\d+)\.(\d+).(\d+)/")
-    macpkg = compile_re("python-(.+)-macosx?(.*).pkg")
+    macpkg = compile_re(r"python-(\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?)-macosx?(\d+).pkg")
 
     thismajor, thisminor, thismicro, releaselevel, serial = version_info
     level = {
@@ -111,19 +152,24 @@ def main(interactive: bool, force: bool, minor_upgrade: bool, dry_run: bool) -> 
         return
 
     finalname = do_download(download_url)
-    if interactive:
-        argv = ["/usr/bin/open", "-b", "com.apple.installer", finalname]
-    else:
-        print("Enter your administrative password to run the update:")
-        argv = [
-            "/usr/bin/sudo",
-            "/usr/sbin/installer",
-            "-pkg",
-            finalname,
-            "-target",
-            "/",
-        ]
-    run(argv)  # noqa: S603
+    with NamedTemporaryFile(mode="w", suffix=".plist") as tf:
+        if interactive:
+            argv = ["/usr/bin/open", "-b", "com.apple.installer", finalname]
+        else:
+            tf.write(choicechanges(finalname))
+            tf.flush()
+            print("Enter your administrative password to run the update:")
+            argv = [
+                "/usr/bin/sudo",
+                "/usr/sbin/installer",
+                "-applyChoiceChangesXML",
+                tf.name,
+                "-pkg",
+                finalname,
+                "-target",
+                "/",
+            ]
+        run(argv)  # noqa: S603
     print("Complete.")
 
 
